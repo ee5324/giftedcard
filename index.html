@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隨機抽卡系統</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #eef2f5;
+            color: #2c3e50;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 20px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: #2980b9;
+            margin-bottom: 20px;
+            font-size: 2.2em;
+        }
+
+        h3 {
+            color: #3498db;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-button {
+            background-color: #7f8c8d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        .toggle-button:hover {
+            background-color: #6c757d;
+        }
+
+        .section-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #dcdfe4;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+
+        input[type="text"], input[type="number"], textarea, select {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .card-list {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .card-item {
+            background-color: #ecf0f1;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 15px;
+            width: 150px;
+            min-height: 80px;
+            font-size: 14px;
+            text-align: center;
+            word-break: break-word;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .card-item.deleted {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .card-item .card-buttons {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-item .card-buttons .small-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        .card-item .card-buttons .small-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .card-item.deleted .card-buttons .toggle-delete-btn {
+            background-color: #27ae60;
+        }
+
+        .card-item.deleted .card-buttons .toggle-delete-btn:hover {
+            background-color: #229954;
+        }
+
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .tab-button {
+            background-color: #dcdfe4;
+            border: 1px solid #bdc3c7;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .tab-button.active {
+            background-color: #ffffff;
+            border-bottom-color: transparent;
+            color: #3498db;
+        }
+
+        .tab-content {
+            border: 1px solid #bdc3c7;
+            border-top: none;
+            padding: 15px;
+            border-radius: 0 0 8px 8px;
+        }
+
+        #assignmentStatus {
+            margin-top: 15px;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .manual-assignment-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background-color: #f1f1f1;
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+
+        .manual-assignment-list-item.deleted {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .manual-assignment-list-item .manual-delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        .manual-assignment-list-item.deleted .manual-delete-btn {
+            background-color: #27ae60;
+        }
+        
+        .compact-input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .compact-input-container input {
+            flex-grow: 1;
+            margin: 0;
+        }
+
+        .custom-card-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background-color: #f1f1f1;
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+        
+        .custom-card-list-item.deleted {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        
+        .custom-card-list-item .custom-card-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .custom-card-list-item .custom-card-buttons .small-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+        
+        .custom-card-list-item.deleted .custom-card-buttons .toggle-delete-btn {
+            background-color: #27ae60;
+        }
+
+        .radio-group {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .radio-group label {
+            background-color: #ecf0f1;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .radio-group label:hover {
+            background-color: #dce0e3;
+        }
+
+        .radio-group input[type="radio"] {
+            display: none;
+        }
+
+        .radio-group input[type="radio"]:checked + label {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .card-count {
+            font-weight: bold;
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 學生抽卡介面 -->
+        <div id="student-view">
+            <button id="toggle-to-admin" class="toggle-button">切換至教師後台</button>
+            <h1>分組抽卡結果</h1>
+            
+            <!-- 學生開始區塊 -->
+            <div id="start-section" class="section-container">
+                <p>點擊觀看結果查看分組抽卡結果。</p>
+                <button id="startBtn">觀看結果</button>
+            </div>
+            
+            <!-- 學生卡片顯示區塊，點擊開始後顯示 -->
+            <div id="result-section" class="section-container hidden">
+                <div id="fullResult" class="card-list"></div>
+                <button id="resetBtn">返回</button>
+            </div>
+        </div>
+
+        <!-- 教師後台管理介面 -->
+        <div id="admin-view" class="hidden">
+            <button id="toggle-to-student" class="toggle-button">返回學生抽卡</button>
+            <h1>教師後台管理</h1>
+            <div class="section-container">
+                <h3>學生名單管理</h3>
+                <textarea id="studentListInput" placeholder="請在此貼上學生名單，每行一個姓名，例如：&#10;小明&#10;小華"></textarea>
+                <button id="saveStudentsBtn">儲存學生名單</button>
+            </div>
+
+            <div class="section-container">
+                <h3>選擇階段</h3>
+                <div class="radio-group">
+                    <input type="radio" id="stage1" name="stage" value="stage1" checked>
+                    <label for="stage1">階段一：主題訂定 <span class="card-count" id="count-stage1"></span></label>
+                    <input type="radio" id="stage2" name="stage" value="stage2">
+                    <label for="stage2">階段二：資料蒐集 <span class="card-count" id="count-stage2"></span></label>
+                    <input type="radio" id="stage3" name="stage" value="stage3">
+                    <label for="stage3">階段三：資料整理 <span class="card-count" id="count-stage3"></span></label>
+                    <input type="radio" id="stage4" name="stage" value="stage4">
+                    <label for="stage4">階段四：成果發表 <span class="card-count" id="count-stage4"></span></label>
+                </div>
+            </div>
+
+            <div class="section-container">
+                <div class="tab-container">
+                    <button class="tab-button active" id="builtinTab">內建卡牌</button>
+                    <button class="tab-button" id="customTab">自行新增卡牌</button>
+                </div>
+
+                <div id="builtinTabContent">
+                    <h3>內建卡牌內容</h3>
+                    <textarea id="builtinCardInput" placeholder="此為第一階段：主題訂定的內建卡牌&#10;你可以直接使用或修改"></textarea>
+                    <button id="saveBuiltinCardsBtn">儲存內建卡牌</button>
+                </div>
+
+                <div id="customTabContent" class="hidden">
+                    <h3>自行新增卡牌</h3>
+                    <div class="compact-input-container">
+                        <input type="text" id="customCardText" placeholder="輸入新的卡牌描述">
+                        <button id="addCustomCardBtn">新增卡牌</button>
+                    </div>
+                    <ul id="customCardList" style="list-style: none; padding: 0;"></ul>
+                </div>
+            </div>
+            
+            <div class="section-container">
+                <h3>手動指派卡片</h3>
+                <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+                    <select id="manualStudentSelect" style="width: 40%;"></select>
+                    <span>給予</span>
+                    <select id="manualCardSelect" style="width: 40%;"></select>
+                </div>
+                <button id="manualAssignBtn">手動指派</button>
+                <div id="manualAssignmentList" style="margin-top: 20px; text-align: left;">
+                    <h4>已指派列表</h4>
+                    <ul id="manualAssignments" style="list-style: none; padding: 0;"></ul>
+                </div>
+            </div>
+            
+            <div class="section-container">
+                <h3>隨機分派卡片</h3>
+                <p>設定每位學生獲得幾張卡片：</p>
+                <input type="number" id="cardsPerStudent" value="3" min="1">
+                <button id="assignCardsBtn">隨機分派卡片</button>
+                <p id="assignmentStatus"></p>
+            </div>
+            
+            <div class="section-container">
+                <h3>操作指南</h3>
+                <ol style="text-align: left; padding-left: 20px;">
+                    <li><strong>設定學生名單：</strong>在「學生名單管理」區塊貼上所有學生的姓名，每行一個，然後點擊「儲存學生名單」。</li>
+                    <li><strong>選擇階段：</strong>點擊「選擇階段」區塊的選項，來切換不同主題的卡牌庫。</li>
+                    <li><strong>編輯卡牌內容：</strong>點擊「內建卡牌」標籤頁可以修改預設的卡牌內容；點擊「自行新增卡牌」標籤頁可以手動新增、標記刪除或永久刪除卡牌。</li>
+                    <li><strong>手動指派：</strong>在「手動指派卡片」區塊，選擇學生和卡片，點擊「手動指派」即可為特定學生預先設定卡片。</li>
+                    <li><strong>分派卡片：</strong>設定每位學生要獲得的卡片數量，然後點擊「隨機分派卡片」。系統會優先保留手動指派的卡片，再隨機分配其餘卡片。**本次分派同一位學生不會抽到重複的卡片。**</li>
+                    <li><strong>觀看結果：</strong>分派完成後，切換回學生介面。學生們只需點擊「觀看結果」按鈕，就能看到每位同學抽到的卡片組合。</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- UI 元素參考 ---
+            const studentView = document.getElementById('student-view');
+            const adminView = document.getElementById('admin-view');
+            const toggleToAdminBtn = document.getElementById('toggle-to-admin');
+            const toggleToStudentBtn = document.getElementById('toggle-to-student');
+
+            const startSection = document.getElementById('start-section');
+            const startBtn = document.getElementById('startBtn');
+            const resultSection = document.getElementById('result-section');
+            const fullResultDiv = document.getElementById('fullResult');
+            const resetBtn = document.getElementById('resetBtn');
+
+            const studentListInput = document.getElementById('studentListInput');
+            const saveStudentsBtn = document.getElementById('saveStudentsBtn');
+            const builtinCardInput = document.getElementById('builtinCardInput');
+            const saveBuiltinCardsBtn = document.getElementById('saveBuiltinCardsBtn');
+            const cardsPerStudentInput = document.getElementById('cardsPerStudent');
+            const assignCardsBtn = document.getElementById('assignCardsBtn');
+            const assignmentStatus = document.getElementById('assignmentStatus');
+
+            const builtinTab = document.getElementById('builtinTab');
+            const customTab = document.getElementById('customTab');
+            const builtinTabContent = document.getElementById('builtinTabContent');
+            const customTabContent = document.getElementById('customTabContent');
+            const customCardText = document.getElementById('customCardText');
+            const addCustomCardBtn = document.getElementById('addCustomCardBtn');
+            const customCardList = document.getElementById('customCardList');
+            const manualStudentSelect = document.getElementById('manualStudentSelect');
+            const manualCardSelect = document.getElementById('manualCardSelect');
+            const manualAssignBtn = document.getElementById('manualAssignBtn');
+            const manualAssignmentsList = document.getElementById('manualAssignments');
+
+            const stageRadios = document.querySelectorAll('input[name="stage"]');
+            const cardCountSpans = document.querySelectorAll('.card-count');
+
+            // --- 內建卡牌資料庫 ---
+            const allBuiltinCards = {
+                stage1: [
+                    '你最近對生活中哪件事最感到好奇？',
+                    '如果可以選一個問題研究，你最想知道什麼？',
+                    '這個問題對你的生活有什麼影響？',
+                    '你認為這個主題對同學有沒有意義？',
+                    '你能用一句話清楚說明你的研究問題嗎？',
+                    '這個問題太大還是太小？需要怎麼調整？',
+                    '這個主題適合用什麼方式研究（觀察、實驗、調查…）？',
+                    '你想得到的答案能解決什麼實際問題？',
+                    '如果要用圖片或符號代表這個主題，你會選什麼？',
+                    '這個研究和你已學過的知識有什麼連結？',
+                    '這個問題有沒有可能需要分成幾個小問題？',
+                    '你覺得別人會對這個主題有興趣嗎？為什麼？',
+                    '你能提出三個和這個主題相關的假設嗎？',
+                    '這個題目是否太模糊？能否更精準？',
+                    '你為什麼想研究這個主題？',
+                    '研究這個主題需要注意什麼倫理問題？',
+                    '如果換一個角度看，這個主題會變成什麼？',
+                    '這個研究的潛在價值是什麼？',
+                    '你能找到這個主題和新聞或時事的關聯嗎？',
+                    '誰可能會想閱讀你的研究成果？',
+                    '你覺得這個題目可以用幾週完成？',
+                    '這個研究題目能幫助你學到什麼新能力？',
+                    '如果把這個題目當成比賽題目，它有吸引力嗎？',
+                    '你認為成功完成這個研究最困難的地方是什麼？',
+                    '這個主題和你的個人經驗有什麼關係？'
+                ],
+                stage2: [
+                    '你打算從哪裡找到資料（書、網路、訪問…）？',
+                    '你要怎麼判斷一份資料是否可靠？',
+                    '哪些資料來源需要特別注意版權或引用？',
+                    '你蒐集到的資料和你的問題有什麼關聯？',
+                    '你找到的資料有沒有互相矛盾？',
+                    '這份資料是事實還是意見？',
+                    '你需要用什麼關鍵字來搜尋？',
+                    '你有沒有考慮過從不同角度蒐集資料？',
+                    '你目前找到的資料夠多嗎？',
+                    '這份資料是誰寫的？有什麼背景？',
+                    '你能用一句話摘要一份資料的重點嗎？',
+                    '這份資料的時間久遠嗎？會影響可信度嗎？',
+                    '你找到的資料有沒有數據或圖表？',
+                    '這些數據可靠嗎？',
+                    '你還需要哪些尚未找到的資料？',
+                    '你怎麼確認這些資料的真實性？',
+                    '哪些資料能幫助你支持假設？',
+                    '哪些資料可能會推翻你的假設？',
+                    '這份資料跟現實生活有什麼連結？',
+                    '你會用什麼方式紀錄你找到的資料？',
+                    '如果找不到資料，你有什麼替代方法？',
+                    '你有沒有考慮訪問專家？',
+                    '你找到的資料能幫你設計實驗或問卷嗎？',
+                    '你在資料蒐集過程中學到什麼新知識？',
+                    '哪一份資料讓你印象最深刻？為什麼？'
+                ],
+                stage3: [
+                    '你要用什麼方法分類資料？',
+                    '哪些資料和研究問題最相關？',
+                    '哪些資料和研究問題關聯較弱？',
+                    '你能用圖表幫助整理資料嗎？',
+                    '哪些資料可以合併成一個重點？',
+                    '這些資料中出現了哪些相同的觀點？',
+                    '哪些資料中有不同的觀點？',
+                    '你能找出其中的矛盾點嗎？',
+                    '你能從數據中發現什麼趨勢？',
+                    '你能用一句話說出目前的主要發現嗎？',
+                    '這些發現能支持你的假設嗎？',
+                    '這些發現有沒有挑戰到你的假設？',
+                    '哪些資料需要再查證？',
+                    '你打算怎麼記錄分析過程？',
+                    '這些資料能不能用不同方法呈現？',
+                    '你能找到其中的因果關係嗎？',
+                    '這些資料有什麼限制？',
+                    '你能找出資料之間的連結嗎？',
+                    '你能將不同來源的資料進行比較嗎？',
+                    '哪些資料需要轉換成數字或百分比才好分析？',
+                    '你能將整理後的資料歸納成三個重點嗎？',
+                    '這些資料中有沒有啟發出新的問題？',
+                    '你能將你的分析方法解釋給同學聽嗎？',
+                    '如果要修改你的分析方式，你會怎麼做？',
+                    '哪些整理好的結果最出乎你意料？'
+                ],
+                stage4: [
+                    '你想用什麼方式發表研究成果（簡報、海報、影片…）？',
+                    '你的成果發表要面對哪些觀眾？',
+                    '觀眾最想知道你研究的哪一部分？',
+                    '你打算怎麼安排發表的順序？',
+                    '你的研究重點是什麼？',
+                    '你要怎麼在有限時間內清楚說明？',
+                    '你的成果展示需要什麼圖片或圖表？',
+                    '你要怎麼吸引觀眾的注意？',
+                    '你要怎麼強調你的主要結論？',
+                    '你的成果要不要提出限制或不足？',
+                    '你希望觀眾從你的發表中帶走什麼訊息？',
+                    '你要如何回答觀眾的提問？',
+                    '你打算如何處理觀眾的不同意見？',
+                    '你的成果有什麼特別之處？',
+                    '你在成果發表中要不要提研究歷程？',
+                    '你能用比喻或故事幫助觀眾理解嗎？',
+                    '你要如何確保自己的發表清楚有條理？',
+                    '你要怎麼展現研究過程中的努力？',
+                    '你有沒有考慮用藝術或設計元素美化發表？',
+                    '你覺得成果發表最困難的地方在哪裡？',
+                    '你要如何控制時間？',
+                    '你希望從觀眾回饋中得到什麼？',
+                    '你能如何改進未來的發表？',
+                    '這次發表讓你最有成就感的是什麼？',
+                    '完成發表後，你會如何評價自己的表現？'
+                ]
+            };
+
+            // --- 視圖切換邏輯 ---
+            toggleToAdminBtn.addEventListener('click', () => {
+                studentView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                loadInitialData();
+            });
+
+            toggleToStudentBtn.addEventListener('click', () => {
+                adminView.classList.add('hidden');
+                studentView.classList.remove('hidden');
+                startSection.classList.remove('hidden');
+                resultSection.classList.add('hidden');
+            });
+
+            // --- 學生頁面邏輯 ---
+            startBtn.addEventListener('click', () => {
+                const studentCards = JSON.parse(localStorage.getItem('studentCards')) || {};
+                
+                if (Object.keys(studentCards).length === 0) {
+                    // 使用簡單提示，而非 alert
+                    assignmentStatus.textContent = '老師還沒有分派卡片，請等待老師操作。';
+                    assignmentStatus.style.color = '#e74c3c';
+                    return;
+                }
+
+                startSection.classList.add('hidden');
+                resultSection.classList.remove('hidden');
+                displayFullResults(studentCards);
+            });
+
+            function displayFullResults(studentCards) {
+                fullResultDiv.innerHTML = '';
+                for (const studentName in studentCards) {
+                    const cards = studentCards[studentName];
+                    const studentBlock = document.createElement('div');
+                    studentBlock.style.marginBottom = '20px';
+                    studentBlock.innerHTML = `<h3>${studentName} 的卡片：</h3>`;
+                    
+                    const cardList = document.createElement('ul');
+                    cardList.classList.add('card-list');
+                    
+                    if (cards && cards.length > 0) {
+                        cards.forEach(card => {
+                            const cardItem = document.createElement('li');
+                            cardItem.classList.add('card-item');
+                            cardItem.textContent = card;
+                            cardList.appendChild(cardItem);
+                        });
+                    } else {
+                        const noCardMessage = document.createElement('p');
+                        noCardMessage.textContent = '沒有抽到卡片。';
+                        cardList.appendChild(noCardMessage);
+                    }
+                    
+                    studentBlock.appendChild(cardList);
+                    fullResultDiv.appendChild(studentBlock);
+                }
+            }
+
+            resetBtn.addEventListener('click', () => {
+                startSection.classList.remove('hidden');
+                resultSection.classList.add('hidden');
+            });
+
+            // --- 教師後台邏輯 ---
+            function updateCardCounts() {
+                const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                const activeCustomCardsCount = customCards.filter(cardObj => !cardObj.deleted).length;
+
+                for (const stage in allBuiltinCards) {
+                    const builtinCount = allBuiltinCards[stage].length;
+                    const totalCount = builtinCount + activeCustomCardsCount;
+                    const countSpan = document.getElementById(`count-${stage}`);
+                    if (countSpan) {
+                        countSpan.textContent = `(${totalCount} 張)`;
+                    }
+                }
+            }
+
+            function renderCustomCards() {
+                const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                customCardList.innerHTML = '';
+                customCards.forEach((cardObj, index) => {
+                    const cardItem = document.createElement('li');
+                    cardItem.classList.add('custom-card-list-item');
+                    
+                    if (cardObj.deleted) {
+                        cardItem.classList.add('deleted');
+                    }
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = cardObj.text;
+                    cardItem.appendChild(textSpan);
+                    
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.classList.add('custom-card-buttons');
+
+                    const toggleDeleteBtn = document.createElement('button');
+                    toggleDeleteBtn.classList.add('small-btn', 'toggle-delete-btn');
+                    toggleDeleteBtn.textContent = cardObj.deleted ? '恢復' : '刪除';
+                    toggleDeleteBtn.addEventListener('click', () => {
+                        toggleCardStatus(index);
+                    });
+
+                    const permanentDeleteBtn = document.createElement('button');
+                    permanentDeleteBtn.classList.add('small-btn');
+                    permanentDeleteBtn.textContent = '永久刪除';
+                    permanentDeleteBtn.style.backgroundColor = '#95a5a6';
+                    permanentDeleteBtn.addEventListener('click', () => {
+                        deleteCustomCardPermanently(index);
+                    });
+
+                    buttonContainer.appendChild(toggleDeleteBtn);
+                    buttonContainer.appendChild(permanentDeleteBtn);
+                    cardItem.appendChild(buttonContainer);
+                    customCardList.appendChild(cardItem);
+                });
+            }
+
+            function toggleCardStatus(index) {
+                const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                if (customCards[index]) {
+                    customCards[index].deleted = !customCards[index].deleted;
+                    localStorage.setItem('customCards', JSON.stringify(customCards));
+                    renderCustomCards();
+                    populateSelects();
+                    updateCardCounts();
+                }
+            }
+
+            function deleteCustomCardPermanently(index) {
+                const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                customCards.splice(index, 1);
+                localStorage.setItem('customCards', JSON.stringify(customCards));
+                renderCustomCards();
+                populateSelects();
+                updateCardCounts();
+            }
+
+            function renderManualAssignments() {
+                const manualAssignments = JSON.parse(localStorage.getItem('manualAssignments')) || {};
+                manualAssignmentsList.innerHTML = '';
+                for (const student in manualAssignments) {
+                    manualAssignments[student].forEach((assignmentObj, index) => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('manual-assignment-list-item');
+                        if (assignmentObj.deleted) {
+                            listItem.classList.add('deleted');
+                        }
+                        
+                        const textSpan = document.createElement('span');
+                        textSpan.textContent = `${student} : ${assignmentObj.text}`;
+                        listItem.appendChild(textSpan);
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.classList.add('manual-delete-btn');
+                        deleteBtn.textContent = assignmentObj.deleted ? '恢復' : '刪除';
+                        deleteBtn.addEventListener('click', () => {
+                            toggleManualAssignmentStatus(student, index);
+                        });
+
+                        listItem.appendChild(deleteBtn);
+                        manualAssignmentsList.appendChild(listItem);
+                    });
+                }
+            }
+
+            function toggleManualAssignmentStatus(student, index) {
+                const manualAssignments = JSON.parse(localStorage.getItem('manualAssignments')) || {};
+                if (manualAssignments[student] && manualAssignments[student][index]) {
+                    manualAssignments[student][index].deleted = !manualAssignments[student][index].deleted;
+                    localStorage.setItem('manualAssignments', JSON.stringify(manualAssignments));
+                    renderManualAssignments();
+                }
+            }
+
+            function populateSelects() {
+                const students = JSON.parse(localStorage.getItem('students')) || {};
+                const currentStage = document.querySelector('input[name="stage"]:checked').value;
+                const builtinCards = JSON.parse(localStorage.getItem('builtinCards_' + currentStage)) || [];
+                const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                const activeCustomCards = customCards.filter(cardObj => !cardObj.deleted).map(cardObj => cardObj.text);
+                const allCards = builtinCards.concat(activeCustomCards);
+
+                manualStudentSelect.innerHTML = Object.keys(students).map(name => `<option value="${name}">${name}</option>`).join('');
+                manualCardSelect.innerHTML = allCards.map(card => `<option value="${card}">${card}</option>`).join('');
+            }
+            
+            function loadInitialData() {
+                const students = JSON.parse(localStorage.getItem('students')) || {};
+                if (Object.keys(students).length > 0) {
+                    studentListInput.value = Object.keys(students).join('\n');
+                }
+                
+                const currentStage = document.querySelector('input[name="stage"]:checked').value;
+                const builtinCards = JSON.parse(localStorage.getItem('builtinCards_' + currentStage));
+                
+                if (!builtinCards) {
+                    builtinCardInput.value = allBuiltinCards[currentStage].join('\n');
+                    localStorage.setItem('builtinCards_' + currentStage, JSON.stringify(allBuiltinCards[currentStage]));
+                } else {
+                    builtinCardInput.value = builtinCards.join('\n');
+                }
+
+                renderCustomCards();
+                populateSelects();
+                renderManualAssignments();
+                updateCardCounts();
+            }
+
+            // 教師後台tab切換
+            builtinTab.addEventListener('click', () => {
+                builtinTabContent.classList.remove('hidden');
+                customTabContent.classList.add('hidden');
+                builtinTab.classList.add('active');
+                customTab.classList.remove('active');
+            });
+
+            customTab.addEventListener('click', () => {
+                customTabContent.classList.remove('hidden');
+                builtinTabContent.classList.add('hidden');
+                customTab.classList.add('active');
+                builtinTab.classList.remove('active');
+            });
+
+            // 階段選擇切換
+            stageRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    const currentStage = radio.value;
+                    const builtinCards = JSON.parse(localStorage.getItem('builtinCards_' + currentStage));
+                    if (builtinCards) {
+                        builtinCardInput.value = builtinCards.join('\n');
+                    } else {
+                        builtinCardInput.value = allBuiltinCards[currentStage].join('\n');
+                    }
+                    populateSelects();
+                });
+            });
+
+            saveStudentsBtn.addEventListener('click', () => {
+                const lines = studentListInput.value.trim().split('\n');
+                const students = {};
+                lines.forEach(line => {
+                    const studentName = line.trim();
+                    if (studentName) {
+                        students[studentName] = studentName;
+                    }
+                });
+                localStorage.setItem('students', JSON.stringify(students));
+                // 使用簡單提示，而非 alert
+                assignmentStatus.textContent = '學生名單已儲存！';
+                assignmentStatus.style.color = '#27ae60';
+                populateSelects();
+            });
+            
+            saveBuiltinCardsBtn.addEventListener('click', () => {
+                const currentStage = document.querySelector('input[name="stage"]:checked').value;
+                const lines = builtinCardInput.value.trim().split('\n');
+                const cards = lines.filter(line => line.trim() !== '');
+                localStorage.setItem('builtinCards_' + currentStage, JSON.stringify(cards));
+                // 使用簡單提示，而非 alert
+                assignmentStatus.textContent = '內建卡牌內容已儲存！';
+                assignmentStatus.style.color = '#27ae60';
+                populateSelects();
+                updateCardCounts();
+            });
+
+            addCustomCardBtn.addEventListener('click', () => {
+                const cardText = customCardText.value.trim();
+                if (cardText) {
+                    const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                    customCards.push({ text: cardText, deleted: false });
+                    localStorage.setItem('customCards', JSON.stringify(customCards));
+                    customCardText.value = '';
+                    renderCustomCards();
+                    populateSelects();
+                    updateCardCounts();
+                }
+            });
+
+            manualAssignBtn.addEventListener('click', () => {
+                const studentName = manualStudentSelect.value;
+                const cardName = manualCardSelect.value;
+                
+                if (!studentName || !cardName) {
+                    assignmentStatus.textContent = '請選擇學生和卡片。';
+                    assignmentStatus.style.color = '#e74c3c';
+                    return;
+                }
+
+                const manualAssignments = JSON.parse(localStorage.getItem('manualAssignments')) || {};
+                if (!manualAssignments[studentName]) {
+                    manualAssignments[studentName] = [];
+                }
+                manualAssignments[studentName].push({ text: cardName, deleted: false });
+
+                localStorage.setItem('manualAssignments', JSON.stringify(manualAssignments));
+                renderManualAssignments();
+                assignmentStatus.textContent = `已將「${cardName}」指派給「${studentName}」。`;
+                assignmentStatus.style.color = '#27ae60';
+            });
+
+            assignCardsBtn.addEventListener('click', () => {
+                const students = JSON.parse(localStorage.getItem('students')) || {};
+                const currentStage = document.querySelector('input[name="stage"]:checked').value;
+                const builtinCards = JSON.parse(localStorage.getItem('builtinCards_' + currentStage)) || [];
+                const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                const manualAssignments = JSON.parse(localStorage.getItem('manualAssignments')) || {};
+                const numCardsPerStudent = parseInt(cardsPerStudentInput.value, 10);
+
+                if (Object.keys(students).length === 0) {
+                    assignmentStatus.textContent = '請先建立學生名單！';
+                    assignmentStatus.style.color = '#e74c3c';
+                    return;
+                }
+                
+                const activeCustomCards = customCards.filter(cardObj => !cardObj.deleted).map(cardObj => cardObj.text);
+                const allCards = builtinCards.concat(activeCustomCards);
+                
+                if (allCards.length < numCardsPerStudent) {
+                    assignmentStatus.textContent = `卡片總數不足！請至少新增${numCardsPerStudent - allCards.length}張卡片。`;
+                    assignmentStatus.style.color = '#e74c3c';
+                    return;
+                }
+
+                const studentCards = {};
+                
+                // Step 1: Process non-deleted manual assignments
+                const activeManualAssignments = {};
+                for (const studentName in manualAssignments) {
+                    const activeCards = manualAssignments[studentName].filter(assignmentObj => !assignmentObj.deleted);
+                    if (activeCards.length > 0) {
+                        activeManualAssignments[studentName] = activeCards.map(obj => obj.text);
+                    }
+                }
+                
+                // Set up studentCards with manual assignments first
+                for (const studentName in students) {
+                    studentCards[studentName] = activeManualAssignments[studentName] || [];
+                }
+
+                // Step 2: Fill remaining card slots with random draws (without replacement for each student)
+                for (const studentName in students) {
+                    const cardsToFill = numCardsPerStudent - studentCards[studentName].length;
+                    
+                    if (cardsToFill <= 0) continue;
+                    
+                    const cardsPool = [...allCards];
+                    
+                    // Remove already assigned cards from this student's pool to prevent duplicates
+                    studentCards[studentName].forEach(assignedCard => {
+                        const index = cardsPool.indexOf(assignedCard);
+                        if (index > -1) {
+                            cardsPool.splice(index, 1);
+                        }
+                    });
+
+                    // Check if there are enough cards left in the pool
+                    if (cardsPool.length < cardsToFill) {
+                         assignmentStatus.textContent = `卡片總數不足！無法為「${studentName}」分派足夠的不重複卡片。`;
+                         assignmentStatus.style.color = '#e74c3c';
+                         return;
+                    }
+                    
+                    // Shuffle the remaining cards
+                    for (let i = cardsPool.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [cardsPool[i], cardsPool[j]] = [cardsPool[j], cardsPool[i]];
+                    }
+
+                    // Draw from the shuffled pool
+                    for (let i = 0; i < cardsToFill; i++) {
+                        studentCards[studentName].push(cardsPool.pop());
+                    }
+                }
+                
+                localStorage.setItem('studentCards', JSON.stringify(studentCards));
+                localStorage.setItem('manualAssignments', JSON.stringify({})); // Clear all manual assignments after main assignment
+                renderManualAssignments();
+                assignmentStatus.textContent = '卡片已成功分派給所有學生！學生現在可以點擊「觀看結果」查看。';
+                assignmentStatus.style.color = '#27ae60';
+                console.log(studentCards);
+            });
+            
+            // 頁面載入時初始化
+            loadInitialData();
+        });
+    </script>
+</body>
+</html>
+
