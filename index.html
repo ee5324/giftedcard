@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隨機抽卡系統</title>
+    <title>隨機抽卡系統 v4.0</title>
     <style>
         body {
             font-family: 'Inter', Arial, sans-serif;
@@ -199,7 +199,6 @@
 
         #assignmentStatus {
             margin-top: 15px;
-            color: #27ae60;
             font-weight: bold;
         }
         
@@ -316,6 +315,20 @@
             font-weight: bold;
             color: #2980b9;
         }
+        
+        .file-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        #download-status {
+            color: #27ae60;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -346,6 +359,12 @@
                 <h3>學生名單管理</h3>
                 <textarea id="studentListInput" placeholder="請在此貼上學生名單，每行一個姓名，例如：&#10;小明&#10;小華"></textarea>
                 <button id="saveStudentsBtn">儲存學生名單</button>
+                <div class="file-buttons">
+                    <button id="downloadBtn">下載資料</button>
+                    <input type="file" id="uploadFile" accept=".json" class="hidden">
+                    <button id="uploadBtn">上傳資料</button>
+                </div>
+                <p id="download-status"></p>
             </div>
 
             <div class="section-container">
@@ -410,6 +429,7 @@
                 <h3>操作指南</h3>
                 <ol style="text-align: left; padding-left: 20px;">
                     <li><strong>設定學生名單：</strong>在「學生名單管理」區塊貼上所有學生的姓名，每行一個，然後點擊「儲存學生名單」。</li>
+                    <li><strong>備份與還原：</strong>點擊「下載資料」可將所有設定（學生、手動指派、自訂卡牌）儲存為檔案。點擊「上傳資料」可將檔案還原。</li>
                     <li><strong>選擇階段：</strong>點擊「選擇階段」區塊的選項，來切換不同主題的卡牌庫。</li>
                     <li><strong>編輯卡牌內容：</strong>點擊「內建卡牌」標籤頁可以修改預設的卡牌內容；點擊「自行新增卡牌」標籤頁可以手動新增、標記刪除或永久刪除卡牌。</li>
                     <li><strong>手動指派：</strong>在「手動指派卡片」區塊，選擇學生和卡片，點擊「手動指派」即可為特定學生預先設定卡片。</li>
@@ -436,11 +456,16 @@
 
             const studentListInput = document.getElementById('studentListInput');
             const saveStudentsBtn = document.getElementById('saveStudentsBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadFile = document.getElementById('uploadFile');
+
             const builtinCardInput = document.getElementById('builtinCardInput');
             const saveBuiltinCardsBtn = document.getElementById('saveBuiltinCardsBtn');
             const cardsPerStudentInput = document.getElementById('cardsPerStudent');
             const assignCardsBtn = document.getElementById('assignCardsBtn');
             const assignmentStatus = document.getElementById('assignmentStatus');
+            const downloadStatus = document.getElementById('download-status');
 
             const builtinTab = document.getElementById('builtinTab');
             const customTab = document.getElementById('customTab');
@@ -588,7 +613,6 @@
                 const studentCards = JSON.parse(localStorage.getItem('studentCards')) || {};
                 
                 if (Object.keys(studentCards).length === 0) {
-                    // 使用簡單提示，而非 alert
                     assignmentStatus.textContent = '老師還沒有分派卡片，請等待老師操作。';
                     assignmentStatus.style.color = '#e74c3c';
                     return;
@@ -818,7 +842,6 @@
                     }
                 });
                 localStorage.setItem('students', JSON.stringify(students));
-                // 使用簡單提示，而非 alert
                 assignmentStatus.textContent = '學生名單已儲存！';
                 assignmentStatus.style.color = '#27ae60';
                 populateSelects();
@@ -829,7 +852,6 @@
                 const lines = builtinCardInput.value.trim().split('\n');
                 const cards = lines.filter(line => line.trim() !== '');
                 localStorage.setItem('builtinCards_' + currentStage, JSON.stringify(cards));
-                // 使用簡單提示，而非 alert
                 assignmentStatus.textContent = '內建卡牌內容已儲存！';
                 assignmentStatus.style.color = '#27ae60';
                 populateSelects();
@@ -896,7 +918,6 @@
 
                 const studentCards = {};
                 
-                // Step 1: Process non-deleted manual assignments
                 const activeManualAssignments = {};
                 for (const studentName in manualAssignments) {
                     const activeCards = manualAssignments[studentName].filter(assignmentObj => !assignmentObj.deleted);
@@ -905,12 +926,10 @@
                     }
                 }
                 
-                // Set up studentCards with manual assignments first
                 for (const studentName in students) {
                     studentCards[studentName] = activeManualAssignments[studentName] || [];
                 }
 
-                // Step 2: Fill remaining card slots with random draws (without replacement for each student)
                 for (const studentName in students) {
                     const cardsToFill = numCardsPerStudent - studentCards[studentName].length;
                     
@@ -918,7 +937,6 @@
                     
                     const cardsPool = [...allCards];
                     
-                    // Remove already assigned cards from this student's pool to prevent duplicates
                     studentCards[studentName].forEach(assignedCard => {
                         const index = cardsPool.indexOf(assignedCard);
                         if (index > -1) {
@@ -926,31 +944,101 @@
                         }
                     });
 
-                    // Check if there are enough cards left in the pool
                     if (cardsPool.length < cardsToFill) {
                          assignmentStatus.textContent = `卡片總數不足！無法為「${studentName}」分派足夠的不重複卡片。`;
                          assignmentStatus.style.color = '#e74c3c';
                          return;
                     }
                     
-                    // Shuffle the remaining cards
                     for (let i = cardsPool.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [cardsPool[i], cardsPool[j]] = [cardsPool[j], cardsPool[i]];
                     }
 
-                    // Draw from the shuffled pool
                     for (let i = 0; i < cardsToFill; i++) {
                         studentCards[studentName].push(cardsPool.pop());
                     }
                 }
                 
                 localStorage.setItem('studentCards', JSON.stringify(studentCards));
-                localStorage.setItem('manualAssignments', JSON.stringify({})); // Clear all manual assignments after main assignment
+                localStorage.setItem('manualAssignments', JSON.stringify({}));
                 renderManualAssignments();
                 assignmentStatus.textContent = '卡片已成功分派給所有學生！學生現在可以點擊「觀看結果」查看。';
                 assignmentStatus.style.color = '#27ae60';
                 console.log(studentCards);
+            });
+            
+            // --- JSON 檔案匯入匯出功能 ---
+            downloadBtn.addEventListener('click', () => {
+                const students = JSON.parse(localStorage.getItem('students')) || {};
+                const customCards = JSON.parse(localStorage.getItem('customCards')) || [];
+                const manualAssignments = JSON.parse(localStorage.getItem('manualAssignments')) || {};
+                
+                const data = {
+                    students,
+                    customCards,
+                    manualAssignments,
+                    builtinCards: {}
+                };
+
+                for (const stage in allBuiltinCards) {
+                    data.builtinCards[stage] = JSON.parse(localStorage.getItem('builtinCards_' + stage));
+                }
+                
+                const dataStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '學生名單_獨立研究抽卡系統_V4.0.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                downloadStatus.textContent = '檔案已成功打包並下載！';
+                setTimeout(() => {
+                    downloadStatus.textContent = '';
+                }, 3000);
+            });
+
+            uploadBtn.addEventListener('click', () => {
+                uploadFile.click();
+            });
+
+            uploadFile.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        if (data.students) {
+                            localStorage.setItem('students', JSON.stringify(data.students));
+                        }
+                        if (data.customCards) {
+                            localStorage.setItem('customCards', JSON.stringify(data.customCards));
+                        }
+                        if (data.manualAssignments) {
+                            localStorage.setItem('manualAssignments', JSON.stringify(data.manualAssignments));
+                        }
+                        if (data.builtinCards) {
+                            for (const stage in data.builtinCards) {
+                                localStorage.setItem('builtinCards_' + stage, JSON.stringify(data.builtinCards[stage]));
+                            }
+                        }
+                        
+                        loadInitialData();
+                        assignmentStatus.textContent = '資料已成功上傳並還原！';
+                        assignmentStatus.style.color = '#27ae60';
+                    } catch (err) {
+                        assignmentStatus.textContent = '檔案格式錯誤，請確保上傳的是正確的 JSON 檔案。';
+                        assignmentStatus.style.color = '#e74c3c';
+                    }
+                };
+                reader.readAsText(file);
             });
             
             // 頁面載入時初始化
@@ -959,4 +1047,3 @@
     </script>
 </body>
 </html>
-
